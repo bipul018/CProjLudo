@@ -26,10 +26,8 @@ enum Color
 };
 
 //Initializes the ludo board
-void initialize();
-
-//Rolls dice and sets value
-unsigned short rollDice();
+void initNum(int playersNum);
+void initChar(char flags[4]);
 
 //0,1,2,3,4 for available pieces to move
 int choices(int diceVal, char canDo[4]);
@@ -37,6 +35,8 @@ int choices(int diceVal, char canDo[4]);
 //-1 for invalid, 0 for ok done, 1 for ok done and reached heaven 
 // 2 for kicking another's to hell, 3 for getting another roll
 int move(int num);
+
+unsigned short rollDice();
 
 // Returns no of gottis that are in the queried cell.
 int getCellContent(char *cellLetters, char gottis[16][2]);
@@ -52,3 +52,15 @@ enum Color getCurrColor();
 
 // Gets corresponding character symbol for color
 char colorToChar(enum Color c);
+
+// Gets color value in word form
+const char* colorToWord(enum Color c);
+
+//Gets no of pieces already in heaven
+short getNoInHeaven(enum Color c);
+
+//Get ranks of heaven
+enum Color getRank(int i);
+
+//Returns 1 is is in heaven
+int isinHeaven(enum Color c, int n);

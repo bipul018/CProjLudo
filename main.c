@@ -3,25 +3,19 @@
 
 int main()
 {
-	initialize();
+	short playersN;
+	do
+	{
+		printf("Enter number of players : ");
+		scanf(" %u", &playersN);
+	} while (playersN < 1);
+	scanf("%*c");
+	initNum(playersN);
 	while (1)
 	{
 		printBoard();
-		switch (getCurrColor())
-		{
-		case RED:
-			printf("Red's turn.");
-			break;
-		case BLUE:
-			printf("Blue's turn.");
-			break;
-		case GREEN:
-			printf("Green's turn.");
-			break;
-		case YELLOW:
-			printf("Yellow's turn.");
-			break;
-		}
+		printf("%s's turn.\n", colorToWord(getCurrColor()));
+
 		printf("Press enter to roll dice.");
 		scanf("%*c");
 		short diceval = rollDice();
@@ -71,6 +65,28 @@ int main()
 		}
 
 		}
+		
+		if (getNoInHeaven(getCurrColor()) == 4)
+		{
+			if (getRank(2) == getCurrColor())
+			{
+				printf("Congratulations, game is completed and the winners are : ");
+				printf("First Position : %s\n", colorToWord(getRank(0)));
+				printf("Second Position : %s\n", colorToWord(getRank(1)));
+				printf("Third Position : %s\n", colorToWord(getRank(2)));
+				break;
+			}
+			else
+			{
+				printf("%s has completed the game.\n\
+Do you wish to continue playing?(Y/N) ", colorToWord(getCurrColor()));
+				char cont = 'Y';
+				scanf(" %c", &cont);
+				if (cont == 'n' || cont == 'N')
+					break;
+			}
+		}
+
 		scanf("%*c");
 		system("cls");
 	}

@@ -24,9 +24,10 @@ struct Cell cells[4][3 * 6];
 struct Cell hell[4];
 struct Cell heaven;
 struct Piece pieces[4][4];
-short isInitialized = 0;
-enum Color currPlayer = RED;
+char playerAvailable[4];
 
+short isInitialized = 0;
+enum Color currPlayer = WHITE;
 enum Color ranking[4] = { WHITE ,WHITE ,WHITE ,WHITE };
 short gamefinish = 0;
 unsigned short latestRoll = 0;
@@ -48,15 +49,76 @@ char colorToChar(enum Color c)
 	}
 }
 
-void initialize()
+short getNoInHeaven(enum Color c)
+{
+	short count = 0;
+	for (int i = 0; i < 4; i++)
+		if (pieces[c][i].cell->type == HEAVEN)
+			count++;
+	return count;
+}
+
+//retunrns no of completed
+static short arrangeRank()
+{
+	short complete = 0, fills[WHITE];
+	for (int i = 0; i < WHITE; i++)
+	{
+		fills[i] = getNoInHeaven(i);
+		if (fills[i] == 4)
+			complete++;
+	}
+	for (int i = 0; i < WHITE; i++)
+	{
+		for (int j = 0; j < WHITE-(i+1);j++)
+		{
+			if (fills[ranking[j]] < fills[ranking[j + 1]])
+			{
+				enum Color tmp = ranking[j];
+				ranking[j] = ranking[j + 1];
+				ranking[j + 1] = tmp;
+			}
+		}
+	}
+	return complete;
+}
+
+static void increasePlayer()
+{
+	do
+	{
+		currPlayer += 1;
+		currPlayer %= WHITE;
+	} while (!playerAvailable[currPlayer]);
+}
+
+void initNum(int playersNum)
+{
+	char flags[4];
+	for (int i = 0; i < 4; i++)
+	{
+		if (i < playersNum)
+			flags[i] = 1;
+		else
+			flags[i] = 0;
+	}
+	initChar(flags);
+}
+
+void initChar(char flags[4])
 {
 	if (isInitialized)
 		return;
 	srand(time(0));
+
 	heaven.type = HEAVEN; heaven.pos = 100; heaven.col = WHITE;
 
 	for (int i = 0; i < 4; i++)
 	{
+		ranking[i] = (enum Color)i;
+		playerAvailable[i] = flags[i];
+		if (currPlayer == WHITE && flags[i])
+			currPlayer = i;
 		for (int j = 0; j < 4; j++)
 		{
 			pieces[i][j].col = i; pieces[i][j].cell = &hell[i]; pieces[i][j].pos = j;
@@ -84,24 +146,6 @@ unsigned short rollDice()
 	return latestRoll;
 }
 
-short winCheck()
-{
-	for (int i = 0; i < 4; i++)
-	{
-		if (currPlayer == ranking[i])
-			return 1;
-	}
-
-	for (int i = 0; i < 4; i++)
-	{
-		if (pieces[currPlayer][i].cell->type != HEAVEN)
-			return 0;
-	}
-	ranking[gamefinish] = currPlayer;
-	gamefinish++;
-	return 1;
-}
-
 int choices(int diceVal, char canDo[4])
 {
 	int freeRoll = (diceVal == 6) || (diceVal == 1);
@@ -118,7 +162,7 @@ int choices(int diceVal, char canDo[4])
 			move++;
 		else if (	type == FINAL && 
 					pieces[currPlayer][i].col == pieces[currPlayer][i].cell->col &&
-					(HEAVEN_GATE + 1 - pieces[currPlayer][i].cell->pos) <= diceVal)
+					(HEAVEN_GATE + 1 - pieces[currPlayer][i].cell->pos) >= diceVal)
 			move++;
 		else
 		{
@@ -127,11 +171,13 @@ int choices(int diceVal, char canDo[4])
 		}
 	}
 	if (move == 0)
-	{
-		currPlayer += 1;
-		currPlayer %= WHITE;
-	}
+		increasePlayer();
 	return move;
+}
+
+int isinHeaven(enum Color c, int n)
+{
+	return pieces[c][n].cell->type == HEAVEN;
 }
 
 int isinHell(char* piecechar)
@@ -175,13 +221,14 @@ int move(int num)
 
 	if (cellType == HELL && (step == 1 || step == 6))
 		pieces[currPlayer][num].cell = &cells[col][HELL_GATE];
-	else if (col == cellCol && cellType == FINAL && (HEAVEN_GATE + 1 - cellPos) < step)
+	else if (col == cellCol && cellType == FINAL && (HEAVEN_GATE + 1 - cellPos) > step)
 	{
-		pieces[currPlayer][num].cell = &cells[currPlayer][num + step];
+		pieces[currPlayer][num].cell = &cells[currPlayer][cellPos + step];
 	}
 	else if (col == cellCol && cellType == FINAL && (HEAVEN_GATE + 1 - cellPos) == step)
 	{
 		pieces[currPlayer][num].cell = &heaven;
+		arrangeRank();
 		return 1;
 	}
 	else if (col == cellCol && cellPos <= FINAL_GATE && (cellPos + step) > FINAL_GATE)
@@ -189,6 +236,7 @@ int move(int num)
 		if (FINAL_GATE + cellPos + step == 18)
 		{
 			pieces[currPlayer][num].cell = &heaven;
+			arrangeRank();
 			return 1;
 		}
 		else
@@ -225,8 +273,7 @@ int move(int num)
 		return -1;
 	if (step == 1 || step == 6)
 		return 3;
-	currPlayer += 1;
-	currPlayer %= WHITE;
+	increasePlayer();
 	return 0;
 }
 
@@ -272,4 +319,28 @@ int getCellContent(char *cellLetters, char gottis[16][2])
 enum Color getCurrColor()
 {
 	return currPlayer;
+}
+
+enum Color getRank(int i)
+{
+	return ranking[i];
+}
+
+const char* colorToWord(enum Color c)
+{
+	switch (c)
+	{
+	case RED:
+		return "Red";
+	case BLUE:
+		return "Blue";
+	case YELLOW:
+		return "Yellow";
+	case GREEN:
+		return "GREEN";
+	case WHITE:
+		return "White";
+	default:
+		return "Invalid";
+	}
 }

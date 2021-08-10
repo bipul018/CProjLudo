@@ -8,7 +8,7 @@ int main()
 	{
 		printf("Enter number of players : ");
 		scanf(" %u", &playersN);
-	} while (playersN < 1);
+	} while (playersN < 1 || playersN > WHITE);
 	scanf("%*c");
 	initNum(playersN);
 	while (1)
